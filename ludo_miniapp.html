@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ludo Game - Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .game-code {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .game-code-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .game-code-value {
+            font-size: 24px;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .game-status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .players-section {
+            margin-bottom: 20px;
+        }
+
+        .players-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .players-title::before {
+            content: '👥';
+            margin-right: 8px;
+        }
+
+        .players-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .player-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid #667eea;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .player-details h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .player-details p {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .player-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .player-status.ready {
+            background: #c8e6c9;
+            color: #1b5e20;
+        }
+
+        .player-status.waiting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .board-section {
+            margin-bottom: 20px;
+        }
+
+        .board {
+            background: #fff;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 15px;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 2px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        }
+
+        .board-cell {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .board-cell:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .board-cell.home {
+            background: #fff3e0;
+            border-color: #ffb74d;
+        }
+
+        .board-cell.safe {
+            background: #e8f5e9;
+            border-color: #81c784;
+        }
+
+        .piece {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: grab;
+            transition: transform 0.2s ease;
+        }
+
+        .piece:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        .piece.red {
+            background: #ef5350;
+            color: white;
+        }
+
+        .piece.yellow {
+            background: #fdd835;
+            color: white;
+        }
+
+        .piece.blue {
+            background: #42a5f5;
+            color: white;
+        }
+
+        .piece.green {
+            background: #66bb6a;
+            color: white;
+        }
+
+        .dice-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dice-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .dice-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .dice-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dice-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 12px;
+            color: #667eea;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .game-over {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .game-over.show {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-over h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .game-over p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .board {
+                grid-template-columns: repeat(12, 1fr);
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 LUDO</h1>
+            <p>Roll the dice and reach home!</p>
+        </div>
+
+        <div id="loadingScreen" class="loading">
+            <div class="spinner"></div>
+            <p>Initializing game...</p>
+        </div>
+
+        <div id="gameScreen" style="display: none;">
+            <div class="game-code">
+                <div class="game-code-label">Game Code</div>
+                <div class="game-code-value" id="gameCodeDisplay">XXXX</div>
+            </div>
+
+            <div class="info-box">
+                <strong>📋 How to Play:</strong> Roll the dice, move your pieces to reach home. First to get all 4 pieces home wins!
+            </div>
+
+            <div class="game-status">
+                <div class="status-label">Current Status</div>
+                <div class="status-value" id="gameStatusDisplay">Waiting for players...</div>
+            </div>
+
+            <div class="players-section">
+                <div class="players-title">Players</div>
+                <div class="players-list" id="playersList">
+                    <div class="player-item">
+                        <div class="player-info">
+                            <div class="player-avatar">🔴</div>
+                            <div class="player-details">
+                                <h3>Waiting for player...</h3>
+                                <p>Red</p>
+                            </div>
+                        </div>
+                        <div class="player-status waiting">Waiting</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="board-section">
+                <div class="board" id="gameBoard">
+                    <!-- Board cells will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="dice-section">
+                <button class="dice-button" id="diceButton" onclick="rollDice()">🎲 Roll Dice</button>
+                <div class="dice-value" id="diceValue" style="display: none;">Rolled: <span id="diceNumber">0</span></div>
+            </div>
+
+            <div class="game-over" id="gameOver">
+                <h2>🏆 Game Over!</h2>
+                <p id="gameOverMessage">Congratulations!</p>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="shareGame()">📤 Share Game</button>
+                <button class="btn btn-secondary" onclick="leaveGame()">❌ Leave Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram Web App initialization
+        let tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        // Game state
+        const gameState = {
+            gameCode: generateGameCode(),
+            players: [],
+            currentPlayer: 0,
+            diceValue: 0,
+            pieces: {
+                red: [0, 0, 0, 0],
+                yellow: [0, 0, 0, 0],
+                blue: [0, 0, 0, 0],
+                green: [0, 0, 0, 0]
+            },
+            isGameStarted: false,
+            isMyTurn: false
+        };
+
+        const COLORS = ['red', 'yellow', 'blue', 'green'];
+        const BOARD_SIZE = 52;
+        const HOME_STRETCH = 6;
+
+        // Generate a unique game code
+        function generateGameCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Initialize the game
+        function initializeGame() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('gameCodeDisplay').textContent = gameState.gameCode;
+            
+            // Add current player
+            const user = tg?.initDataUnsafe?.user;
+            if (user) {
+                gameState.players.push({
+                    id: user.id,
+                    name: user.first_name || 'Player',
+                    color: COLORS[0],
+                    isHost: true,
+                    isReady: true
+                });
+            }
+
+            renderBoard();
+            updatePlayersList();
+            updateGameStatus();
+        }
+
+        // Render the board
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                
+                // Mark safe zones
+                if (i % 13 === 0 || i % 13 === 6) {
+                    cell.classList.add('safe');
+                }
+
+                // Add pieces if any
+                COLORS.forEach(color => {
+                    gameState.pieces[color].forEach((pos, idx) => {
+                        if (pos === i) {
+                            const piece = document.createElement('div');
+                            piece.className = `piece ${color}`;
+                            piece.textContent = idx + 1;
+                            piece.onclick = (e) => {
+                                e.stopPropagation();
+                                selectPiece(color, idx);
+                            };
+                            cell.appendChild(piece);
+                        }
+                    });
+                });
+
+                cell.textContent = cell.textContent || i;
+                board.appendChild(cell);
+            }
+        }
+
+        // Roll the dice
+        function rollDice() {
+            if (!gameState.isMyTurn) {
+                alert('Not your turn!');
+                return;
+            }
+
+            gameState.diceValue = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('diceNumber').textContent = gameState.diceValue;
+            document.getElementById('diceValue').style.display = 'block';
+            document.getElementById('diceButton').disabled = true;
+
+            // Simulate AI moves for other players
+            setTimeout(() => {
+                moveToNextPlayer();
+            }, 2000);
+        }
+
+        // Select a piece to move
+        function selectPiece(color, index) {
+            if (gameState.diceValue === 0) {
+                alert('Roll the dice first!');
+                return;
+            }
+
+            // Move the piece
+            const newPos = Math.min(gameState.pieces[color][index] + gameState.diceValue, BOARD_SIZE + HOME_STRETCH - 1);
+            gameState.pieces[color][index] = newPos;
+
+            // Check for win
+            if (gameState.pieces[color].every(pos => pos >= BOARD_SIZE)) {
+                endGame(color);
+                return;
+            }
+
+            gameState.diceValue = 0;
+            document.getElementById('diceValue').style.display = 'none';
+            renderBoard();
+            moveToNextPlayer();
+        }
+
+        // Move to next player
+        function moveToNextPlayer() {
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            gameState.isMyTurn = gameState.players[gameState.currentPlayer].id === tg?.initDataUnsafe?.user?.id;
+            document.getElementById('diceButton').disabled = !gameState.isMyTurn;
+            updateGameStatus();
+        }
+
+        // End the game
+        function endGame(winnerColor) {
+            gameState.isGameStarted = false;
+            const winnerPlayer = gameState.players.find(p => p.color === winnerColor);
+            document.getElementById('gameOverMessage').textContent = `${winnerPlayer.name} (${winnerColor}) won the game!`;
+            document.getElementById('gameOver').classList.add('show');
+            document.getElementById('diceButton').disabled = true;
+        }
+
+        // Update players list
+        function updatePlayersList() {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+
+            gameState.players.forEach((player, idx) => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                playerItem.style.borderLeftColor = getColorCode(player.color);
+
+                const colors = {
+                    red: '🔴',
+                    yellow: '🟡',
+                    blue: '🔵',
+                    green: '🟢'
+                };
+
+                playerItem.innerHTML = `
+                    <div class="player-info">
+                        <div class="player-avatar" style="background: ${getColorCode(player.color)}">${colors[player.color]}</div>
+                        <div class="player-details">
+                            <h3>${player.name}</h3>
+                            <p>${player.color.charAt(0).toUpperCase() + player.color.slice(1)}</p>
+                        </div>
+                    </div>
+                    <div class="player-status ${player.isReady ? 'ready' : 'waiting'}">
+                        ${player.isReady ? '✓ Ready' : '⏳ Waiting'}
+                    </div>
+                `;
+
+                playersList.appendChild(playerItem);
+            });
+        }
+
+        // Update game status
+        function updateGameStatus() {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            const status = gameState.isGameStarted 
+                ? `${currentPlayer.name}'s turn (${currentPlayer.color})`
+                : `Waiting for ${4 - gameState.players.length} more players...`;
+            
+            document.getElementById('gameStatusDisplay').textContent = status;
+        }
+
+        // Get color code for styling
+        function getColorCode(color) {
+            const colorMap = {
+                red: '#ef5350',
+                yellow: '#fdd835',
+                blue: '#42a5f5',
+                green: '#66bb6a'
+            };
+            return colorMap[color];
+        }
+
+        // Share game
+        function shareGame() {
+            const text = `🎲 Join my Ludo game! Code: ${gameState.gameCode}`;
+            if (tg?.shareToChat) {
+                tg.shareToChat(text);
+            } else {
+                alert(`Share this code with friends: ${gameState.gameCode}`);
+            }
+        }
+
+        // Leave game
+        function leaveGame() {
+            if (confirm('Are you sure you want to leave the game?')) {
+                if (tg?.close) {
+                    tg.close();
+                } else {
+                    window.close();
+                }
+            }
+        }
+
+        // Start the game
+        window.addEventListener('load', () => {
+            setTimeout(initializeGame, 500);
+        });
+    </script>
+</body>
+</html>
